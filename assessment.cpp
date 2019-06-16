@@ -10,7 +10,7 @@
 #include "filter_spirin.hpp"
 #include "pruner.hpp"
 #include "pruner_cutoff.hpp"
-#include "pruner_topk.hpp"
+#include "pruner_topk_optimized.hpp"
 #include "pruner_epspruning.hpp"
 #include "search_quality_metric.hpp"
 #include "utils.hpp"
@@ -80,14 +80,14 @@ assessment(
     ScoreFun score_fun(*std::max_element(k_list.begin(), k_list.end()));
     std::vector<FilterSpirin<ScoreFun>> filterSpirin_list;
     PrunerCutoff<ScoreFun> prunerCutoff(&score_fun);
-    std::vector<PrunerTopk<ScoreFun>> prunerTopk_list;
+    std::vector<PrunerTopkOptimized<ScoreFun>> prunerTopk_list;
     std::vector<
             std::vector<PrunerEpsPruning<ScoreFun>>
     > prunerEpsPruning_list_list(epsilon_list.size());
 
     for (k_type k: k_list) {
         filterSpirin_list.emplace_back(FilterSpirin<ScoreFun>(k, &score_fun));
-        prunerTopk_list.emplace_back(PrunerTopk<ScoreFun>(&score_fun, k));
+        prunerTopk_list.emplace_back(PrunerTopkOptimized<ScoreFun>(&score_fun, k));
     }
     for (std::size_t ei=0; ei < epsilon_list.size(); ++ei) {
         for (k_type k: k_list) {
