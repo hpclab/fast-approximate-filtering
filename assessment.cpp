@@ -10,6 +10,7 @@
 #include "filter_spirin.hpp"
 #include "pruner.hpp"
 #include "pruner_cutoff.hpp"
+#include "pruner_topk.hpp"
 #include "pruner_topk_optimized.hpp"
 #include "pruner_epspruning.hpp"
 #include "search_quality_metric.hpp"
@@ -74,20 +75,23 @@ assessment(
         bool skip_shorter_lists,
         bool test_cutoff,
         bool test_topk,
+        bool test_topk_optimized,
         bool test_epsfiltering,
         int num_runs
 ) {
     ScoreFun score_fun(*std::max_element(k_list.begin(), k_list.end()));
     std::vector<FilterSpirin<ScoreFun>> filterSpirin_list;
     PrunerCutoff<ScoreFun> prunerCutoff(&score_fun);
-    std::vector<PrunerTopkOptimized<ScoreFun>> prunerTopk_list;
+    std::vector<PrunerTopk<ScoreFun>> prunerTopk_list;
+    std::vector<PrunerTopkOptimized<ScoreFun>> prunerTopkoptimized_list;
     std::vector<
             std::vector<PrunerEpsPruning<ScoreFun>>
     > prunerEpsPruning_list_list(epsilon_list.size());
 
     for (k_type k: k_list) {
         filterSpirin_list.emplace_back(FilterSpirin<ScoreFun>(k, &score_fun));
-        prunerTopk_list.emplace_back(PrunerTopkOptimized<ScoreFun>(&score_fun, k));
+        prunerTopk_list.emplace_back(PrunerTopk<ScoreFun>(&score_fun, k));
+        prunerTopkoptimized_list.emplace_back(PrunerTopkOptimized<ScoreFun>(&score_fun, k));
     }
     for (std::size_t ei=0; ei < epsilon_list.size(); ++ei) {
         for (k_type k: k_list) {
@@ -100,12 +104,14 @@ assessment(
     std::vector<Test> comp_opt_list;
     std::vector<Test> comp_cutoff_opt_list;
     std::vector<Test> comp_topk_opt_list;
+    std::vector<Test> comp_topkoptimized_opt_list;
     std::vector<std::vector<Test>> comp_epsfiltering_list_list(epsilon_list.size());
 
     for (std::size_t ki=0; ki < k_list.size(); ++ki) {
         comp_opt_list.emplace_back(Test(nullptr, &filterSpirin_list[ki], num_runs));
         comp_cutoff_opt_list.emplace_back(Test(&prunerCutoff, &filterSpirin_list[ki], num_runs));
         comp_topk_opt_list.emplace_back(Test(&prunerTopk_list[ki], &filterSpirin_list[ki], num_runs));
+        comp_topkoptimized_opt_list.emplace_back(Test(&prunerTopkoptimized_list[ki], &filterSpirin_list[ki], num_runs));
     }
     for (std::size_t ei=0; ei < epsilon_list.size(); ++ei) {
         for (std::size_t ki=0; ki < k_list.size(); ++ki) {
@@ -118,6 +124,7 @@ assessment(
     std::vector<MultipleTestOutcome> test_opt_outcome_list(num_tests);
     std::vector<MultipleTestOutcome> test_cutoff_opt_outcome_list(num_tests);
     std::vector<MultipleTestOutcome> test_topk_opt_outcome_list(num_tests);
+    std::vector<MultipleTestOutcome> test_topkoptimized_opt_outcome_list(num_tests);
     std::vector<std::vector<MultipleTestOutcome>> test_epsfiltering_outcome_list_list(epsilon_list.size());
     for (std::size_t ei=0; ei < epsilon_list.size(); ++ei) {
         test_epsfiltering_outcome_list_list[ei].resize(num_tests);
@@ -229,6 +236,16 @@ assessment(
 #endif
                 }
 
+                // Topkoptimized-OPT
+                if (test_topk_optimized) {
+                    outcome = comp_topkoptimized_opt_list[ki](relevances, n, minmax_element);
+                    update_multiple_test_outcome(outcome, test_topkoptimized_opt_outcome_list[index], &optimal_score,
+                                                 num_lists_assessed_list[index]);
+#ifdef DEBUG
+                    check_solution(relevances, outcome.score, outcome.indices, score_fun, &optimal_score, 0.5, true, false);
+#endif
+                }
+
                 // EpsPruning-OPT: EpsFiltering
                 if (test_epsfiltering) {
                     for (std::size_t ei=0; ei < epsilon_list.size(); ++ei) {
@@ -282,6 +299,11 @@ assessment(
                 print_json_multiple_test_outcome(test_topk_opt_outcome_list[index], ostream);
             }
 
+            if (test_topk_optimized) {
+                ostream << "," << std::endl << "\t\t\"TopkOptimized-OPT\": ";
+                print_json_multiple_test_outcome(test_topkoptimized_opt_outcome_list[index], ostream);
+            }
+
             if (test_epsfiltering) {
                 for (std::size_t ei=0; ei < epsilon_list.size(); ++ei) {
                     ostream << "," << std::endl << "\t\t\"EpsFiltering (epsilon=" << epsilon_list[ei] << ")\": ";
@@ -315,7 +337,8 @@ int main(int argc, char *argv[]) {
             ("e,epsilon_list", "Target approximation factor", cxxopts::value<std::string>()->default_value("0.1,0.01"))
             ("skip-shorter-lists", "Skips the lists shorter than n elements", cxxopts::value<bool>()->default_value("true"))
             ("test-cutoff", "Test the cutoff-opt strategy", cxxopts::value<bool>()->default_value("true"))
-            ("test-topk", "Test the topk-opt strategy", cxxopts::value<bool>()->default_value("true"))
+            ("test-topk", "Test the topk-opt strategy", cxxopts::value<bool>()->default_value("false"))
+            ("test-topk-optimized", "Test the topk(optimized)-opt strategy", cxxopts::value<bool>()->default_value("true"))
             ("test-epsfiltering", "Test the epsilon filtering strategy", cxxopts::value<bool>()->default_value("true"))
             ("runs", "Number of times each test must be repeated", cxxopts::value<int>()->default_value("5"))
             ("cpu-affinity", "Set the cpu affinity of the process", cxxopts::value<int>()->default_value("-1"))
@@ -348,6 +371,7 @@ int main(int argc, char *argv[]) {
     bool        param_skip_shorter_lists;
     bool        param_test_epsfiltering;
     bool        param_test_topk;
+    bool        param_test_topk_optimized;
     bool        param_test_cutoff;
     int         param_runs;
     int         param_show_progress;
@@ -427,6 +451,7 @@ int main(int argc, char *argv[]) {
         param_skip_shorter_lists = arguments["skip-shorter-lists"].as<bool>();
         param_test_epsfiltering = arguments["test-epsfiltering"].as<bool>();
         param_test_topk = arguments["test-topk"].as<bool>();
+        param_test_topk_optimized = arguments["test-topk-optimized"].as<bool>();
         param_test_cutoff = arguments["test-cutoff"].as<bool>();
 
         // param runs
@@ -479,13 +504,13 @@ int main(int argc, char *argv[]) {
         assessment<dcg_metric>(
                 param_file_path_list, ostream, param_show_progress,
                 param_n_cut_list, param_k_list, param_epsilon_list,
-                param_skip_shorter_lists, param_test_cutoff, param_test_topk, param_test_epsfiltering, param_runs
+                param_skip_shorter_lists, param_test_cutoff, param_test_topk, param_test_topk_optimized, param_test_epsfiltering, param_runs
         );
     } else if (param_metric == "dcglz") {
         assessment<dcglz_metric>(
                 param_file_path_list, ostream, param_show_progress,
                 param_n_cut_list, param_k_list, param_epsilon_list,
-                param_skip_shorter_lists, param_test_cutoff, param_test_topk, param_test_epsfiltering, param_runs
+                param_skip_shorter_lists, param_test_cutoff, param_test_topk, param_test_topk_optimized, param_test_epsfiltering, param_runs
         );
     } else {
         std::cerr << "The given metric has not been programmed yet" << std::endl;

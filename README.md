@@ -5,6 +5,8 @@ This code was used in the experiments of the following paper.
 
 * Franco Maria Nardini, Roberto Trani, Rossano Venturini, _"Fast Approximate Filtering of Search Results Sorted by Attribute"_, ACM SIGIR 2019.
 
+In addition to the strategies used in the paper above, we add here an optimized version of the topk pruning, which came out just after the publication to SIGIR.
+This optimized version of the topk is slightly faster (in practice) than the previous one, but suffer of the same weak performance guarantees.
 
 Building the code
 -----------------
@@ -35,7 +37,8 @@ Usage
       -e, --epsilon_list arg    Target approximation factor (default: 0.1,0.01)
           --skip-shorter-lists  Skips the lists shorter than n elements (default: true)
           --test-cutoff         Test the cutoff-opt strategy (default: true)
-          --test-topk           Test the topk-opt strategy (default: true)
+          --test-topk           Test the topk-opt strategy (default: false)
+          --test-topk-optimized Test the topk(optimized)-opt strategy (default: true)
           --test-epsfiltering   Test the epsilon filtering strategy (default: true)
           --runs arg            Number of times each test must be repeated (default: 5)
           --cpu-affinity arg    Set the cpu affinity of the process (default: -1)
