@@ -17,6 +17,8 @@ The following dependency is needed for the build.
 
 To build the code:
 
+    $ git clone git@github.com:hpclab/fast-approximate-filtering.git
+    $ cd fast-approximate-filtering
     $ mkdir build
     $ cd build
     $ cmake .. -DCMAKE_BUILD_TYPE=Release
@@ -26,7 +28,9 @@ To build the code:
 Usage
 -----------------------
 
-    ./assessment [OPTION...] [FILES...]
+Command line parameters are listed below.
+
+    assessment [OPTION...] [FILES...]
     
       -h, --help                Print this help message
       -m, --metric arg          The search quality metric to use. Available options are: dcg, dcglz (default: dcg)
