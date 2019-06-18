@@ -207,7 +207,7 @@ assessment(
                     update_multiple_test_outcome(outcome, test_opt_outcome_list[index], nullptr,
                                                  num_lists_assessed_list[index]);
 #ifdef DEBUG
-                    check_solution(relevances.data(), outcome.score, outcome.indices, score_fun);
+                    check_solution(relevances, outcome.score, outcome.indices, score_fun);
 #endif
                     optimal_score = outcome.score;
                 }
@@ -225,7 +225,7 @@ assessment(
                     update_multiple_test_outcome(outcome, test_topk_opt_outcome_list[index], &optimal_score,
                                                  num_lists_assessed_list[index]);
 #ifdef DEBUG
-                    check_solution(relevances.data(), outcome.score, outcome.indices, score_fun, &optimal_score, 0.5, true, false);
+                    check_solution(relevances, outcome.score, outcome.indices, score_fun, &optimal_score, 0.5, true, false);
 #endif
                 }
 
@@ -236,7 +236,7 @@ assessment(
                         update_multiple_test_outcome(outcome, test_epsfiltering_outcome_list_list[ei][index],
                                                      &optimal_score, num_lists_assessed_list[index]);
 #ifdef DEBUG
-                        check_solution(relevances.data(), outcome.score, outcome.indices, score_fun, &optimal_score, epsilon, true, false);
+                        check_solution(relevances, outcome.score, outcome.indices, score_fun, &optimal_score, epsilon_list[ei], true, false);
 #endif
                     }
                 }
