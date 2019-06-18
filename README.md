@@ -6,7 +6,7 @@ This code was used in the experiments of the following paper.
 * Franco Maria Nardini, Roberto Trani, Rossano Venturini, _"Fast Approximate Filtering of Search Results Sorted by Attribute"_, ACM SIGIR 2019.
 
 In addition to the strategies used in the paper above, we add here an optimized version of the topk pruning, which came out just after the publication to SIGIR.
-This optimized version of the topk is slightly faster (in practice) than the previous one, but suffer of the same weak performance guarantees.
+This optimized version of the topk is slightly faster (in practice) than the previous one and suffers of the same weak performance guarantees.
 
 Building the code
 -----------------
