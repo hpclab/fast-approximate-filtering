@@ -5,8 +5,9 @@ This code was used in the experiments of the following paper.
 
 * Franco Maria Nardini, Roberto Trani, Rossano Venturini, _"Fast Approximate Filtering of Search Results Sorted by Attribute"_, ACM SIGIR 2019.
 
-In addition to the strategies used in the paper above, we add here an optimized version of the topk pruning, which came out just after the publication to SIGIR.
-This optimized version of the topk is slightly faster (in practice) than the previous one and suffers of the same weak performance guarantees.
+Along with the strategies used in the paper above (contained in the master branch), we add in the develop branch an optimized implementation of the topk pruning strategy.
+This optimized implementation of the topk strategy is slightly faster than the previous one and it shows the same weak performance guarantees of the original implementation.
+The performance of this implementation are presented in a paper currently under review.
 
 Building the code
 -----------------
@@ -19,6 +20,8 @@ The following dependency is needed for the build.
 
 To build the code:
 
+    $ git clone -b develop git@github.com:hpclab/fast-approximate-filtering.git
+    $ cd fast-approximate-filtering
     $ mkdir build
     $ cd build
     $ cmake .. -DCMAKE_BUILD_TYPE=Release
@@ -28,7 +31,9 @@ To build the code:
 Usage
 -----------------------
 
-    ./assessment [OPTION...] [FILES...]
+Command line parameters are listed below.
+
+    assessment [OPTION...] [FILES...]
     
       -h, --help                Print this help message
       -m, --metric arg          The search quality metric to use. Available options are: dcg, dcglz (default: dcg)
