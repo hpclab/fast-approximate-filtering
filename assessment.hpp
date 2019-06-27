@@ -25,6 +25,10 @@ typedef struct {
      */
     index_type num_elements_pruned = 0;
     /**
+     * Num elements not pruned in the first stage
+     */
+    index_type num_elements_not_pruned = 0;
+    /**
      * Time spent in the first stage (pruning)
      */
     double first_stage_time = 0;
@@ -127,6 +131,7 @@ public:
 
             index_type n2 = pruningSolution.size();
             solution.num_elements_pruned = n - n2;
+            solution.num_elements_not_pruned = n2;
 
             // create the list for the second stage
             relevance_type *new_rel_list = new relevance_type[n2];

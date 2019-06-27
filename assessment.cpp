@@ -37,7 +37,7 @@ update_multiple_test_outcome(
     multiple_test_outcome.avg_approximation_error = new_multiplier * approximation_error + old_multiplier * multiple_test_outcome.avg_approximation_error;
 
     multiple_test_outcome.avg_num_elements_pruned = new_multiplier * single_test_outcome.num_elements_pruned + old_multiplier * multiple_test_outcome.avg_num_elements_pruned;
-    multiple_test_outcome.avg_num_elements_not_pruned = new_multiplier * single_test_outcome.indices.size() + old_multiplier * multiple_test_outcome.avg_num_elements_not_pruned;
+    multiple_test_outcome.avg_num_elements_not_pruned = new_multiplier * single_test_outcome.num_elements_not_pruned + old_multiplier * multiple_test_outcome.avg_num_elements_not_pruned;
     multiple_test_outcome.avg_first_stage_time = new_multiplier * single_test_outcome.first_stage_time + old_multiplier * multiple_test_outcome.avg_first_stage_time;
     multiple_test_outcome.avg_second_stage_time = new_multiplier * single_test_outcome.second_stage_time + old_multiplier * multiple_test_outcome.avg_second_stage_time;
     multiple_test_outcome.avg_total_time = new_multiplier * single_test_outcome.total_time + old_multiplier * multiple_test_outcome.avg_total_time;
