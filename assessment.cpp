@@ -181,9 +181,11 @@ assessment(
             // check the skip_shorter_lists constraint
             const std::size_t n = (n_cut > 0) ? std::min(resultsList.size(), static_cast<std::size_t>(n_cut)) : resultsList.size();
             if (skip_shorter_lists and n_cut > n) {
+                index += k_list.size();
                 continue;
             }
             if (n == 0) {
+                index += k_list.size();
                 continue;
             }
 
