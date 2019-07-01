@@ -258,7 +258,9 @@ assessment(
 
     std::size_t index = 0;
     // loop over the different cuts of n
-    for (index_type n_cut: n_cut_list) {
+    for (std::size_t ni=0; ni < n_cut_list.size(); ++ni) {
+        index_type n_cut = n_cut_list[ni];
+
         // loop over the different values of k
         for (std::size_t ki=0; ki < k_list.size(); ++ki) {
             if (n_cut > 0 && k_list[ki] > n_cut) {
@@ -293,7 +295,7 @@ assessment(
 
             ostream << std::endl << "\t}" << std::endl;
             ostream << "}";
-            if (ki < (k_list.size()-1)) {
+            if (ki < (k_list.size()-1) || ni < (n_cut_list.size()-1)) {
                 ostream << ",";
             }
             ostream << std::endl;
