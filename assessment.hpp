@@ -123,7 +123,7 @@ public:
             solution.first_stage_time = get_time_milliseconds();
 
             PrunerSolution pruningSolution = this->pruner->operator()(rel_list, n, minmax_element);
-            for (int run = 0; run < this->num_runs; ++run) {
+            for (int run = 1; run < this->num_runs; ++run) {
                 doNotOptimizeAway(this->pruner->operator()(rel_list, n, minmax_element).size());
             }
 
@@ -143,7 +143,7 @@ public:
             solution.second_stage_time = get_time_milliseconds();
 
             filteringSolution = this->filter->operator()(new_rel_list, n2);
-            for (int run=0; run < this->num_runs; ++run) {
+            for (int run = 1; run < this->num_runs; ++run) {
                 doNotOptimizeAway(this->filter->operator()(new_rel_list, n2).size());
             }
 
@@ -159,7 +159,7 @@ public:
             solution.second_stage_time = get_time_milliseconds();
 
             filteringSolution = this->filter->operator()(rel_list, n);
-            for (int run=0; run < this->num_runs; ++run) {
+            for (int run = 1; run < this->num_runs; ++run) {
                 doNotOptimizeAway(this->filter->operator()(rel_list, n).size());
             }
 
