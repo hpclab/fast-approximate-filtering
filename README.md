@@ -9,7 +9,8 @@ The two datasets used to assess all filtering algorithms can be downloaded here:
 Table of contents
 -----------------------
 - [Building the code](#building-the-code)
-- [Usage](#usage)
+- [Usage assessment](#usage-assessment)
+- [Usage filter](#usage-filter)
 - [Input formats](#input-formats)
 - [Datasets description](#datasets-description)
 - [Datasets format](#datasets-format)
@@ -39,8 +40,10 @@ make
 ```
 
 
-Usage
+Usage `assessment`
 -----------------------
+
+The `assessment` command tests the many filtering strategies and prints the performance results.
 
 Command line parameters are listed below.
 
@@ -60,6 +63,52 @@ Command line parameters are listed below.
           --show-progress       Show the computation progress (default: true)
       -o, --output arg          Write result to FILE instead of standard output
 
+An example of output is the following one.
+
+    [
+    {
+            "n_cut": 10000, "k": 10, "num_lists_assessed": 222, "strategies": {
+                    "OPT": {"avg_score": 9.41093, "max_approximation_error": 0, "avg_approximation_error": 0, "avg_num_elements_pruned": 0, "avg_num_elements_not_pruned": 10000, "avg_first_stage_time": 0.00367355, "avg_second_stage_time": 0.0577718, "avg_total_time": 0.0614454},
+                    "Cutoff-OPT": {"avg_score": 9.40668, "max_approximation_error": 0.0623043, "avg_approximation_error": 0.000586275, "avg_num_elements_pruned": 8101.18, "avg_num_elements_not_pruned": 1898.82, "avg_first_stage_time": 0.0169158, "avg_second_stage_time": 0.0111549, "avg_total_time": 0.0280707},
+                    "Topk-OPT": {"avg_score": 9.31001, "max_approximation_error": 0.0953211, "avg_approximation_error": 0.0115233, "avg_num_elements_pruned": 9990, "avg_num_elements_not_pruned": 10, "avg_first_stage_time": 0.00979444, "avg_second_stage_time": 0.000198172, "avg_total_time": 0.00999261},
+                    "EpsFiltering (epsilon=0.5)": {"avg_score": 6.28308, "max_approximation_error": 0.43983, "avg_approximation_error": 0.33194, "avg_num_elements_pruned": 9990.01, "avg_num_elements_not_pruned": 9.99099, "avg_first_stage_time": 0.00399522, "avg_second_stage_time": 0.000176727, "avg_total_time": 0.00417195},
+                    "EpsFiltering (epsilon=0.1)": {"avg_score": 9.20887, "max_approximation_error": 0.0683661, "avg_approximation_error": 0.019979, "avg_num_elements_pruned": 9956.08, "avg_num_elements_not_pruned": 43.9234, "avg_first_stage_time": 0.00280179, "avg_second_stage_time": 0.000499718, "avg_total_time": 0.00330151},
+                    "EpsFiltering (epsilon=0.01)": {"avg_score": 9.41088, "max_approximation_error": 0.000405073, "avg_approximation_error": 3.98411e-06, "avg_num_elements_pruned": 9928.27, "avg_num_elements_not_pruned": 71.7297, "avg_first_stage_time": 0.00524528, "avg_second_stage_time": 0.000675126, "avg_total_time": 0.00592041},
+                    "EpsFiltering (epsilon=0.001)": {"avg_score": 9.41093, "max_approximation_error": 0, "avg_approximation_error": 0, "avg_num_elements_pruned": 9923.29, "avg_num_elements_not_pruned": 76.7117, "avg_first_stage_time": 0.00715013, "avg_second_stage_time": 0.000661049, "avg_total_time": 0.00781118},
+            }
+    },
+    {
+            "n_cut": 10000, "k": 20, "num_lists_assessed": 222, "strategies": {
+                    "OPT": {"avg_score": 11.3355, "max_approximation_error": 0, "avg_approximation_error": 0, "avg_num_elements_pruned": 0, "avg_num_elements_not_pruned": 10000, "avg_first_stage_time": 0.00354752, "avg_second_stage_time": 0.108199, "avg_total_time": 0.111746},
+                    ...
+            }
+    },
+    ...
+    ]
+
+
+Usage `filter`
+-----------------------
+
+The `filter` command applies a filtering strategy to the input data and prints the list of ids to select. The default filtering strategy, i.e., when no other strategies have been selected, is the optimal filtering with no pruning.
+
+Command line parameters are listed below.
+
+    filter [OPTION...] positional parameters
+
+      -h, --help               Print this help message
+      -m, --metric arg         The search quality metric to use. Available
+                               options are: dcg, dcglz (default: dcg)
+      -n, --n-cut arg          Truncate all lists to the first n elements, if n
+                               is greater than zero (default: 0)
+      -k, arg                  Maximum number of elements to return (default: 50)
+      -e, --epsilon arg        Target approximation factor (default: 0.01)
+      -a, --cpu-affinity arg   Set the cpu affinity of the process (default: -1)
+      -o, --output arg         Write result to FILE instead of standard output
+          --test-cutoff        Test the cutoff-opt strategy
+          --test-topk          Test the topk-opt strategy
+          --test-epsfiltering  Test the epsilon filtering strategy
+
 
 Input formats
 -----------------------
@@ -77,6 +126,10 @@ In this case, the input must be formatted as follows:
     * `ni` rows containing `document id`, `attribute value`, and `estimated relevance` separated by a tab.
 
 For both previous cases, `attribute value` and `estimated relevance` must be floating point values, while `document id` can be any string.
+
+The `filter` command accepts a single list as input.
+Thus only a single file can be passed or, in case of feeding from standard input, the number `n` of lists must be skipped from the input.
+
 
 
 Datasets description

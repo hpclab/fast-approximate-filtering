@@ -1,12 +1,12 @@
-#ifndef FILTERING_PRUNING_EPSPRUNING_HPP
-#define FILTERING_PRUNING_EPSPRUNING_HPP
+#ifndef PRUNERS_PRUNER_EPSPRUNING_HPP
+#define PRUNERS_PRUNER_EPSPRUNING_HPP
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <vector>
-#include "heapq.hpp"
-#include "pruner.hpp"
+#include "../data_structures/heapq.hpp"
+#include "../filtering/pruner.hpp"
 
 
 /**
@@ -25,7 +25,7 @@ public:
      * @param k Maximum number of elements to keep
      * @param epsilon Maximum approximation error
      */
-    PrunerEpsPruning(const ScoreFun * score_fun, k_type k, score_type epsilon) :
+    PrunerEpsPruning(const std::shared_ptr<ScoreFun> score_fun, k_type k, score_type epsilon) :
             Pruner<ScoreFun>(score_fun),
             k(k),
             epsilon(epsilon) {
@@ -42,18 +42,19 @@ public:
     PrunerSolution
     operator()(const relevance_type * rel_list, const index_type n, const minmax_type &minmax_element) const {
         const score_type delta = (1 - this->epsilon);
+        const ScoreFun & score_fun = *(this->score_fun.get());
 
-        const score_type max_gain = this->score_fun->gain_factor(minmax_element.max);
+        const score_type max_gain = score_fun.gain_factor(minmax_element.max);
         const score_type min_gain = std::max(
                 // min element
-                this->score_fun->gain_factor(minmax_element.min),
+                score_fun.gain_factor(minmax_element.min),
                 // the contribution of all elements after M must not be over epsilon times M
-                (this->epsilon * max_gain * this->score_fun->discount_factor(1)) / (delta * this->score_fun->discount_factor_sum(2, this->k))
+                (this->epsilon * max_gain * score_fun.discount_factor(1)) / (delta * score_fun.discount_factor_sum(2, this->k))
         ) * (1.0 - 1e-16);  // workaround to fix numerical instability
-        relevance_type min_threshold = this->score_fun->gain_factor_inverse(min_gain);
+        relevance_type min_threshold = score_fun.gain_factor_inverse(min_gain);
         for (std::size_t i = 16;
-             i > 0 && this->score_fun->gain_factor(min_threshold) > min_gain; --i) {  // workaround to fix numerical instability
-            min_threshold = this->score_fun->gain_factor_inverse(min_gain - std::pow(0.1, i));
+             i > 0 && score_fun.gain_factor(min_threshold) > min_gain; --i) {  // workaround to fix numerical instability
+            min_threshold = score_fun.gain_factor_inverse(min_gain - std::pow(0.1, i));
         }
 //    while (score_fun.gain_factor(min_threshold) > min_gain) {  // workaround to fix numerical instability
 //        min_threshold *= 1.0 - 1e-16;
@@ -61,12 +62,12 @@ public:
 
         // compute the number of intervals
         std::vector<relevance_type> interval_boundaries(
-                static_cast<std::size_t>(1 + std::ceil(std::log(min_gain / max_gain) / std::log(delta)))
+                1 + static_cast<std::size_t>(1 + std::ceil(std::log2(min_gain / max_gain) / std::log2(delta)))
         );
         // and fill the boundaries vector with all the boundaries
         double v = max_gain;
         for (std::size_t i = interval_boundaries.size(); i > 0; --i) {
-            interval_boundaries[i - 1] = this->score_fun->gain_factor_inverse(v);
+            interval_boundaries[i - 1] = score_fun.gain_factor_inverse(v);
             v *= delta;
         }
         interval_boundaries.back() = minmax_element.max; // fix the error of the last interval due to the inverse operation
@@ -141,4 +142,4 @@ public:
     const score_type epsilon;
 };
 
-#endif //FILTERING_PRUNING_EPSPRUNING_HPP
+#endif //PRUNERS_PRUNER_EPSPRUNING_HPP

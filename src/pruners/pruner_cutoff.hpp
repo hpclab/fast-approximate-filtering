@@ -1,7 +1,7 @@
-#ifndef FILTERING_PRUNING_CUTOFF_HPP
-#define FILTERING_PRUNING_CUTOFF_HPP
+#ifndef PRUNERS_PRUNER_CUTOFF_HPP
+#define PRUNERS_PRUNER_CUTOFF_HPP
 
-#include "pruner.hpp"
+#include "../filtering/pruner.hpp"
 
 
 /**
@@ -17,7 +17,7 @@ public:
      * Constructor
      * @param score_fun Score function used to score the solutions
      */
-    PrunerCutoff(const ScoreFun * score_fun) :
+    PrunerCutoff(const std::shared_ptr<ScoreFun> score_fun) :
             Pruner<ScoreFun>(score_fun) {
     }
 
@@ -43,4 +43,4 @@ public:
     }
 };
 
-#endif //FILTERING_PRUNING_CUTOFF_HPP
+#endif //PRUNERS_PRUNER_CUTOFF_HPP

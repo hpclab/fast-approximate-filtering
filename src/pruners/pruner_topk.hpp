@@ -1,9 +1,9 @@
-#ifndef FILTERING_PRUNING_TOPK_HPP
-#define FILTERING_PRUNING_TOPK_HPP
+#ifndef PRUNERS_PRUNER_TOPK_HPP
+#define PRUNERS_PRUNER_TOPK_HPP
 
 #include <vector>
-#include "heapq.hpp"
-#include "pruner.hpp"
+#include "../data_structures/heapq.hpp"
+#include "../filtering/pruner.hpp"
 
 
 /**
@@ -20,7 +20,7 @@ public:
      * @param score_fun Score function used to score the solutions
      * @param k Maximum number of elements to keep
      */
-    PrunerTopk(const ScoreFun * score_fun, k_type k) :
+    PrunerTopk(const std::shared_ptr<ScoreFun> score_fun, k_type k) :
             Pruner<ScoreFun>(score_fun),
             k(k) {
     }
@@ -85,4 +85,4 @@ public:
     const k_type k;
 };
 
-#endif //FILTERING_PRUNING_TOPK_HPP
+#endif //PRUNERS_PRUNER_TOPK_HPP

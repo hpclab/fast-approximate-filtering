@@ -1,5 +1,5 @@
-#ifndef HEAPQ_HPP
-#define HEAPQ_HPP
+#ifndef DATA_STRUCTURES_HEAPQ_HPP
+#define DATA_STRUCTURES_HEAPQ_HPP
 
 #include <algorithm>
 #include <vector>
@@ -269,4 +269,4 @@ public:
     }
 };
 
-#endif //HEAPQ_HPP
+#endif //DATA_STRUCTURES_HEAPQ_HPP

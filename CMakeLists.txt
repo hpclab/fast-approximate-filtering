@@ -43,3 +43,8 @@ add_executable(assessment
         src/assessment.cpp
         ${filtering_SRC}
         )
+
+add_executable(filter
+        src/filter.cpp
+        ${filtering_SRC}
+        )

@@ -1,8 +1,9 @@
-#ifndef FILTERING_FILTER_SPIRIN_HPP
-#define FILTERING_FILTER_SPIRIN_HPP
+#ifndef FILTERS_FILTER_SPIRIN_HPP
+#define FILTERS_FILTER_SPIRIN_HPP
 
+#include <algorithm>
 #include <cassert>
-#include "filter.hpp"
+#include "../filtering/filter.hpp"
 
 
 /**
@@ -20,7 +21,7 @@ public:
      * @param k Maximum number of elements to keep
      * @param score_fun Score function used to score the solutions
      */
-    FilterSpirin(k_type k, const ScoreFun * score_fun) :
+    FilterSpirin(k_type k, const std::shared_ptr<ScoreFun> score_fun) :
             Filter<ScoreFun>(k, score_fun) {
     }
 
@@ -32,24 +33,32 @@ public:
      */
     FilterSolution
     operator()(const relevance_type * rel_list, const index_type n) const {
+        return this->filter_impl(rel_list, n);
+    }
+
+private:
+    template <bool debug_print=false>
+    inline FilterSolution
+    filter_impl(const relevance_type * rel_list, const index_type n) const {
         FilterSolution solution;
         if (n == 0 || this->k == 0) {
             return solution;
         }
         // check the value of k
+        const ScoreFun & score_fun = *(this->score_fun.get());
         const k_type k = (this->k > n) ? n : this->k;
 
         // matrix used by the dynamic algorithm
         // I use a malloc here to avoid the cost of initializing all elements
         score_type *M = new score_type[((k - 1) * (k - 1 + 1) / 2) + k * (n - (k - 1))];
-        score_type *buffer = new score_type[n * 2];
+        score_type *buffer = new score_type[n + k];
         score_type *gains = buffer, *discounts = buffer + n;
         for (std::size_t i = 0; i < k; ++i) {
-            gains[i] = this->score_fun->gain_factor(rel_list[i]);
-            discounts[i] = this->score_fun->discount_factor(i + 1);
+            gains[i] = score_fun.gain_factor(rel_list[i]);
+            discounts[i] = score_fun.discount_factor(i + 1);
         }
         for (std::size_t i = k; i < n; ++i) {
-            gains[i] = this->score_fun->gain_factor(rel_list[i]);
+            gains[i] = score_fun.gain_factor(rel_list[i]);
         }
 
         // support variables used to shift within the one-dimension vector as if it were a matrix
@@ -58,6 +67,9 @@ public:
 
         // filling the table
         M[0] = gains[0] * discounts[0];
+        if (debug_print) {
+            std::cout << 0 << "\t" << M[0] << std::endl;
+        }
         for (std::size_t row = 1; row < k; ++row) {  // the triangular block ends in position k-1
             curr_row_shift = prev_row_shift + row;
 
@@ -68,6 +80,14 @@ public:
             }
             M[curr_row_shift + row] = M[prev_row_shift + row - 1] + gains[row] * discounts[row];
 
+            if (debug_print) {
+                std::cout << row << "\t" << M[curr_row_shift + 0];
+                for (std::size_t col=1; col <= row; ++col) {
+                    std::cout << "\t" << M[curr_row_shift + col];
+                }
+                std::cout << std::endl;
+            }
+
             prev_row_shift = curr_row_shift;
         }
         for (std::size_t row = k; row < n; ++row) {  // after position k-1 the block is rectangular
@@ -77,6 +97,14 @@ public:
             for (std::size_t col = 1; col < k; ++col) {
                 M[curr_row_shift + col] = std::max(M[prev_row_shift + col],
                                                    M[prev_row_shift + col - 1] + gains[row] * discounts[col]);
+            }
+
+            if (debug_print) {
+                std::cout << row << "\t" << M[curr_row_shift + 0];
+                for (std::size_t col=1; col < k; ++col) {
+                    std::cout << "\t" << M[curr_row_shift + col];
+                }
+                std::cout << std::endl;
             }
 
             prev_row_shift = curr_row_shift;
@@ -120,4 +148,4 @@ public:
 };
 
 
-#endif //FILTERING_FILTER_SPIRIN_HPP
+#endif //FILTERS_FILTER_SPIRIN_HPP

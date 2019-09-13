@@ -1,25 +1,25 @@
-#ifndef FILTERING_FILTER_HPP
-#define FILTERING_FILTER_HPP
+#ifndef FILTERING_PRUNER_HPP
+#define FILTERING_PRUNER_HPP
 
-#include <vector>
+#include <memory>
 #include "types.hpp"
 
 
 /**
- * Filtering solution representation.
+ * Pruning solution representation.
  */
-typedef struct _filtering_solution {
+typedef struct _pruning_solution {
 public:
     /**
-     * Equal operator among two filtering solutions.
-     * The two solutions are equal iff they have the same score and are composed by the same indices.
+     * Equal operator among two pruning solutions.
+     * The two solutions are equal iff they are composed by the same indices.
      * @param l First solution
      * @param r Second solution
      * @return A boolean stating if the two given solutions are equal
      */
     friend bool
-    operator==(const _filtering_solution &l, const _filtering_solution &r) {
-        if (l.score != r.score || l.size() != r.size()) {
+    operator==(const _pruning_solution &l, const _pruning_solution &r) {
+        if (l.size() != r.size()) {
             return false;
         }
 
@@ -42,30 +42,25 @@ public:
 
 public:
     /**
-     * Score of the solution
-     */
-    score_type score = 0;
-    /**
      * Indices of the elements composing the solution
      */
     std::vector<index_type> indices;
-} FilterSolution;
+} PrunerSolution;
 
 
 /**
- * Abstract class implementing a generic filter@k.
+ * Abstract class implementing a generic pruner.
  * @tparam ScoreFun Score function type
  */
 template <typename ScoreFun>
-class Filter {
+class Pruner {
 public:
     /**
-     * Constructor of a generic filter@k.
+     * Constructor of a generic pruner.
      * @param k Maximum number of elements to keep
      * @param score_fun Score function used to score the solutions
      */
-    Filter(k_type k, const ScoreFun * score_fun) :
-            k(k),
+    Pruner(const std::shared_ptr<ScoreFun> score_fun) :
             score_fun(score_fun) {
     }
 
@@ -73,27 +68,24 @@ public:
      * Default destructor
      */
     virtual
-    ~Filter() {}
+    ~Pruner() {}
 
     /**
-     * Filters the given list of relevances and returns a filtering solution representing the outcome of the filtering@k.
+     * Prunes the given list of relevances and returns a pruning solution representing the outcome of the pruning.
      * @param rel_list List containing the relevance scores, ordered according to some attribute
      * @param n Number of elements of rel_list
-     * @return The filtering solution built on top of the given list of relevances
+     * @param minmax_element The min and maximum elements of the list
+     * @return The pruning solution built on top of the given list of relevances
      */
-    virtual FilterSolution
-    operator()(const relevance_type * rel_list, const index_type n) const = 0;
+    virtual PrunerSolution
+    operator()(const relevance_type * rel_list, const index_type n, const minmax_type &minmax_element) const = 0;
 
 public:
     /**
-     * Maximum number of elements to keep
-     */
-    const k_type k;
-    /**
      * Score function used to score the solutions
      */
-    const ScoreFun * score_fun;
+    const std::shared_ptr<ScoreFun> score_fun;
 };
 
 
-#endif //FILTERING_FILTER_HPP
+#endif //FILTERING_PRUNER_HPP

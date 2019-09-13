@@ -22,8 +22,8 @@ THE SOFTWARE.
 
 */
 
-#ifndef CXXOPTS_HPP_INCLUDED
-#define CXXOPTS_HPP_INCLUDED
+#ifndef UTILS_CXXOPTS_HPP
+#define UTILS_CXXOPTS_HPP
 
 #include <cstring>
 #include <cctype>
@@ -1767,4 +1767,4 @@ namespace cxxopts {
 
 }
 
-#endif //CXXOPTS_HPP_INCLUDED
+#endif //UTILS_CXXOPTS_HPP

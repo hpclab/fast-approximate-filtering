@@ -1,11 +1,15 @@
-#ifndef FILTERING_UTILS_HPP
-#define FILTERING_UTILS_HPP
+#ifndef UTILS_UTILS_HPP
+#define UTILS_UTILS_HPP
 
+#include <algorithm>
 #include <cassert>
+#include <cmath>
+#include <cfloat>
 #include <sstream>
 #include <sys/time.h>
 #include <vector>
 #include <numeric>
+#include "../filtering/types.hpp"
 
 
 /**
@@ -18,6 +22,7 @@ get_time_milliseconds() {
     gettimeofday(&tv, nullptr);
     return (double(tv.tv_sec) * 1000000 + double(tv.tv_usec)) / 1000.0;
 }
+
 
 /**
  * @author: Folly
@@ -39,6 +44,7 @@ void doNotOptimizeAway(const T &datum) {
     asm volatile(""::"r"(datum));
 }
 
+
 /**
  * Computes the score of the given solution
  * @tparam ScoreFun Score function type
@@ -47,16 +53,16 @@ void doNotOptimizeAway(const T &datum) {
  * @param score_fun Score function used to score the solution
  * @return The score obtained by selecting the given indices within rel_list
  */
-template<typename ScoreFun>
+template <typename ScoreFun>
 score_type
 score_solution(
         const relevance_type *rel_list,
         const std::vector<index_type> &indices,
-        const ScoreFun &score_fun
+        const ScoreFun * score_fun
 ) {
     score_type score = 0.0;
     for (std::size_t i = 0, i_end = indices.size(); i < i_end; ++i) {
-        score += score_fun(rel_list[indices[i]], i + 1);
+        score += score_fun->operator()(rel_list[indices[i]], i + 1);
     }
     for (std::size_t i = 1, i_end = indices.size(); i < i_end; ++i) {
         assert(indices[i - 1] < indices[i]);
@@ -65,68 +71,73 @@ score_solution(
 }
 
 
+class CheckSolutionException : public std::exception {
+public:
+    CheckSolutionException(
+            const std::string &message
+    ) : m_message(std::string("CheckSolutionException: ") + message) {}
+
+    virtual const char *
+    what() const noexcept {
+        return m_message.c_str();
+    }
+
+private:
+    std::string m_message;
+};
+
+
 /**
-* Computes the score of the given solution
+ * Check the safety of the given solution
  * @tparam ScoreFun Score function type
  * @param rel_list List containing the relevance scores, ordered according to some attribute
  * @param solution_score The score of the solution
  * @param solution_indices The indices of the elements participating to the solution
- * @param score_fun Score function used to score the solution
  * @param optimal_score A reference to the optimal score if available (To check if the solution meets the given guarantees)
- * @param epsilon Maximum approximation error
- * @param epsilon_below True iff solution_score can be below optimal_score
- * @param epsilon_above True iff solution_score can be above optimal_score
  */
-template<typename ScoreFun>
+template <typename ScoreFun>
 void
 check_solution(
-        const relevance_type *rel_list,
         const score_type solution_score,
+        const relevance_type *rel_list,
         const std::vector<index_type> & solution_indices,
-        const ScoreFun &score_fun,
-        const score_type *optimal_score = nullptr,
-        double epsilon = 0.0,
-        bool epsilon_below = true,
-        bool epsilon_above = true
+        const ScoreFun * score_fun,
+        const score_type optimal_score = -1,
+        double epsilon_below = 0.0,
+        double epsilon_above = 0.0
 ) {
     score_type real_score = score_solution(rel_list, solution_indices, score_fun);
+    const score_type tolerance = 1.0e-12;
 
-    if (epsilon_below && solution_score + 1.0e-12 < (1.0 - epsilon) * real_score) {
-        throw std::runtime_error(
-                "AssertionError: the solution score is less than (1-eps) times the real score");
+    if (epsilon_below > 0 && solution_score + tolerance < (1.0 - epsilon_below) * real_score) {
+        throw CheckSolutionException("the solution score is less than (1-eps) times the real score");
     }
-    if (!epsilon_below && solution_score + 1.0e-12 < real_score) {
-        throw std::runtime_error(
-                "AssertionError: the solution score is less than the real score");
+    if (epsilon_below == 0 && solution_score + tolerance < real_score) {
+        throw CheckSolutionException("the solution score is less than the real score");
     }
-    if (epsilon_above && solution_score - 1.0e-12 > (1.0 + epsilon) * real_score) {
-        throw std::runtime_error(
-                "AssertionError: the solution score is greater than (1+eps) times the real score");
+    if (epsilon_above > 0 && solution_score - tolerance > (1.0 + epsilon_above) * real_score) {
+        throw CheckSolutionException("the solution score is greater than (1+eps) times the real score");
     }
-    if (!epsilon_above && solution_score - 1.0e-12 > real_score) {
-        throw std::runtime_error(
-                "AssertionError: the solution score is greater than the real score");
+    if (epsilon_above == 0 && solution_score - tolerance > real_score) {
+        throw CheckSolutionException("the solution score is greater than the real score");
     }
 
-    if (optimal_score != nullptr) {
-        if (epsilon_below && real_score + 1.0e-12 < (1.0 - epsilon) * (*optimal_score)) {
-            throw std::runtime_error(
-                    "AssertionError: the real score is less than (1-eps) times the optimal one");
+    if (optimal_score >= 0) {
+        if (epsilon_below > 0 && real_score + tolerance < (1.0 - epsilon_below) * optimal_score) {
+            throw CheckSolutionException("the real score is less than (1-eps) times the optimal one");
         }
-        if (!epsilon_below && real_score + 1.0e-12 < (*optimal_score)) {
-            throw std::runtime_error(
-                    "AssertionError: the real score is less than the optimal one");
+        if (epsilon_below == 0 && real_score + tolerance < optimal_score) {
+            throw CheckSolutionException("the real score is less than the optimal one");
         }
-        if (epsilon_above && real_score - 1.0e-12 > (1.0 + epsilon) * (*optimal_score)) {
-            throw std::runtime_error(
-                    "AssertionError: the real score is greater than (1+eps) times the optimal one");
+        if (epsilon_above > 0 && real_score - tolerance > (1.0 + epsilon_above) * optimal_score) {
+            throw CheckSolutionException("the real score is greater than (1+eps) times the optimal one");
         }
-        if (!epsilon_above && real_score - 1.0e-12 > (*optimal_score)) {
-            throw std::runtime_error(
-                    "AssertionError: the real score is greater than the optimal one");
+        if (epsilon_above == 0 && real_score - tolerance > optimal_score) {
+            throw CheckSolutionException("the real score is greater than the optimal one");
         }
     }
 }
+
 
 // source: https://stackoverflow.com/questions/17074324/how-can-i-sort-two-vectors-in-the-same-way-with-criteria-that-uses-only-one-of
 template <typename T, typename Compare>
@@ -140,6 +151,8 @@ std::vector<std::size_t> sort_permutation(
               [&](std::size_t i, std::size_t j){ return compare(vec[i], vec[j]); });
     return p;
 }
+
+
 // source: https://stackoverflow.com/questions/17074324/how-can-i-sort-two-vectors-in-the-same-way-with-criteria-that-uses-only-one-of
 template <typename T>
 void apply_permutation_in_place(
@@ -166,6 +179,7 @@ void apply_permutation_in_place(
     }
 }
 
+
 class ResultsList {
 public:
     ResultsList(std::vector<std::string> && ids, std::vector<double> && attributes, std::vector<relevance_type > && relevances) :
@@ -187,6 +201,7 @@ public:
     const std::vector<double> attributes;
     const std::vector<relevance_type> relevances;
 };
+
 
 /**
  * Reads a list of results from the given istream. The format must be: first line number n of elements, then n lines
@@ -287,6 +302,7 @@ read_results_list(
     return ResultsList(std::move(ids), std::move(attributes), std::move(relevances));
 }
 
+
 template <typename T>
 std::vector<T>
 read_parameter_list(
@@ -320,4 +336,5 @@ read_parameter_list(
     }
     return result;
 }
-#endif //FILTERING_UTILS_HPP
+
+#endif //UTILS_UTILS_HPP
