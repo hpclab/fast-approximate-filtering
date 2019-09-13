@@ -36,10 +36,10 @@ if (UNIX)
 endif ()
 
 file(GLOB filtering_SRC
-        "*.hpp"
+        "src/*.hpp"
         )
 
 add_executable(assessment
-        assessment.cpp
+        src/assessment.cpp
         ${filtering_SRC}
         )
