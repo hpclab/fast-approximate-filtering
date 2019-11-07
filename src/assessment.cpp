@@ -302,7 +302,7 @@ assessment(
                 if (param_check_solutions) {
                     try {
                         check_solution(outcome.score, rel_list, outcome.indices, score_fun.get(), -1);
-                    } catch (CheckSolutionException e) {
+                    } catch (CheckSolutionException & e) {
                         std::ostringstream error;
                         error << e.what() << ". " << tests_opt[ki]->name << " with n=" << param_n_cut_list[ni] << " and k=" << param_k_list[ki] << " on the list ";
                         if (use_files) {
@@ -320,7 +320,7 @@ assessment(
                     if (param_check_solutions) {
                         try {
                             check_solution(outcome.score, rel_list, outcome.indices, score_fun.get(), optimal_score, tests_list[ki][j]->epsilon_below, tests_list[ki][j]->epsilon_above);
-                        } catch (CheckSolutionException e) {
+                        } catch (CheckSolutionException & e) {
                             std::ostringstream error;
                             error << e.what() << ". " << tests_list[ki][j]->name << " with n=" << param_n_cut_list[ni] << " and k=" << param_k_list[ki] << " on the list ";
                             if (use_files) {
